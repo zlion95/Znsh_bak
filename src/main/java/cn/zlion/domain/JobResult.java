@@ -89,7 +89,7 @@ public class JobResult {
 
     @Override
     public String toString() {
-        return "JobResult{" +
+        return "JobResultDao{" +
                 "pk='" + pk + '\'' +
                 ", pk_t='" + pk_t + '\'' +
                 ", job_id='" + job_id + '\'' +
