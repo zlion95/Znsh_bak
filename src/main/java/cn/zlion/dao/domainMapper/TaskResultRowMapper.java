@@ -1,4 +1,4 @@
-package cn.zlion.dao;
+package cn.zlion.dao.domainMapper;
 
 import cn.zlion.domain.TaskResult;
 import org.springframework.jdbc.core.RowMapper;

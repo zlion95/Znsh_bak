@@ -1,7 +1,7 @@
 package cn.zlion.dao.daoImpl;
 
 import cn.zlion.dao.JobResultDao;
-import cn.zlion.dao.JobResultRowMapper;
+import cn.zlion.dao.domainMapper.JobResultRowMapper;
 import cn.zlion.domain.JobResult;
 import cn.zlion.pagenationUtil.PageResult;
 import cn.zlion.pagenationUtil.Pagination;
@@ -22,7 +22,7 @@ public class JobResultDaoImpl implements JobResultDao{
     public PageResult findByPage(String app_id, int curPage, int pageRows) {
         String sql = "SELECT * FROM \"" + app_id + "\".\"" + JobResult.TABLE_NAME + "\"";
         Pagination pagination = new Pagination(sql, jdbcTemplate, pageRows, curPage, new JobResultRowMapper());
-        return new PageResult(pagination.getTotalRows(), pagination.getResultList());
+        return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(),pagination.getResultList());
     }
 
 }

@@ -1,7 +1,7 @@
 package cn.zlion.dao.daoImpl;
 
 import cn.zlion.dao.CourseDao;
-import cn.zlion.dao.CourseRowMapper;
+import cn.zlion.dao.domainMapper.CourseRowMapper;
 import cn.zlion.domain.Course;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
