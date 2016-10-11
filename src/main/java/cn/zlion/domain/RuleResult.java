@@ -4,6 +4,7 @@ package cn.zlion.domain;
  * Created by zzs on 10/8/16.
  */
 public class RuleResult {
+    public static String TABLE_NAME = "T_RESULT_RULE";
 
     private String pk;
     private String pk_j;
