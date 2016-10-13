@@ -39,7 +39,7 @@ public class ClusterController {
         String resultTableName = request.getParameter("table");
         int page = 1, rows = 100;
         //分页的基本参数，根据需要自己设置需要的参数
-        if (!(request.getParameter("page").equals("")||request.getParameter("page")==null)
+        if (!(request.getParameter("page")==null||request.getParameter("page").equals(""))
                 && !(request.getParameter("rows")==null||request.getParameter("rows").equals(""))){
             page = Integer.parseInt(request.getParameter("page"));
             rows = Integer.parseInt(request.getParameter("rows"));
@@ -47,6 +47,7 @@ public class ClusterController {
         try{
             PageResult pageResult = clusterService.getPageResultByTableName(appId, resultTableName, page, rows);
             jsonRender.put("Data", pageResult);
+            jsonRender.put("Code", 200);
         }catch (TableNameException e){
             e.printStackTrace();
             jsonRender.put("Code", 103);

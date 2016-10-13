@@ -1,13 +1,15 @@
 package cn.zlion;
 
-import cn.zlion.dao.CourseDao;
-import cn.zlion.dao.JobResultDao;
-import cn.zlion.dao.TaskResultDao;
+import cn.zlion.service.TableNameException;
+import cn.zlion.service.YbTestService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 
 @RunWith(SpringRunner.class)
@@ -15,22 +17,21 @@ import org.springframework.test.context.junit4.SpringRunner;
 public class ZnshBakApplicationTests {
 
 	@Autowired
-	private CourseDao courseDao;
-
-	@Autowired
-	private TaskResultDao taskResultDao;
-
-	@Autowired
-	private JobResultDao jobResultDao;
+	private YbTestService ybTestService;
 
 	@Test
 	public void contextLoads() {
-//		List<Course> courses = courseDao.findAll("TestApp");
-//		for (Course course : courses){
-//			System.out.println(course.toString());
-//		}
-//		System.out.println(courseDao.findAmount("TestApp"));
-		System.out.println(jobResultDao.findByPage("TestApp", 1, 100));
+
+		try {
+			ybTestService.saveClusterDataToYbTest("TestApp");
+		}catch (IOException e){
+			e.printStackTrace();
+		}catch (URISyntaxException e){
+			e.printStackTrace();
+		}catch (TableNameException e){
+			e.printStackTrace();
+		}
+
 	}
 
 }

@@ -6,6 +6,7 @@ import cn.zlion.domain.JobResult;
 import cn.zlion.pagenationUtil.PageResult;
 import cn.zlion.pagenationUtil.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -16,7 +17,12 @@ import org.springframework.stereotype.Repository;
 public class JobResultDaoImpl implements JobResultDao{
 
     @Autowired
+    @Qualifier("postgresqlJdbcTemplate")
     private JdbcTemplate jdbcTemplate;
+
+//    @Autowired
+//    @Qualifier("oracleJdbcTemplate")
+//    private JdbcTemplate oracleJdbcTemplate;
 
     @Override
     public PageResult findByPage(String app_id, int curPage, int pageRows) {

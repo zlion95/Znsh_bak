@@ -6,6 +6,7 @@ import cn.zlion.domain.TaskResult;
 import cn.zlion.pagenationUtil.PageResult;
 import cn.zlion.pagenationUtil.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class TaskResultDaoImpl implements TaskResultDao {
 
     @Autowired
+    @Qualifier("postgresqlJdbcTemplate")
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    @Qualifier("oracleJdbcTemplate")
+    private JdbcTemplate oracleJdbcTemplate;
 
     @Override
     @Transactional(readOnly = true)
