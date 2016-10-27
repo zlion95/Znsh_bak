@@ -7,9 +7,17 @@ import java.sql.Timestamp;
  */
 public class TaskResult {
     public static String TABLE_NAME = "T_RESULT_TASK";
+    public static String TABLE_CREATE_SQL = "( pk VARCHAR(32) PRIMARY KEY NOT NULL," +
+            " app_id VARCHAR(20) NOT NULL," +
+            " status SMALLINT NOT NULL," +
+            " msg VARCHAR(128)," +
+            " summary CLOB," +
+            " time_arrival TIMESTAMP WITH TIME ZONE NOT NULL," +
+            " time_start TIMESTAMP WITH TIME ZONE NOT NULL," +
+            " time_finish TIMESTAMP WITH TIME ZONE NOT NULL )";
+    public static String TABLE_DATA_INSERT_SQL = "(pk, app_id, status, msg, summary, time_arrival, time_start, time_finish) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     private String pk;
-
     private String app_id;
     private short status;
     private String msg;

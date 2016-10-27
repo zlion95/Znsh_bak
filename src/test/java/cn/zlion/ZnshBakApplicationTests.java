@@ -1,5 +1,8 @@
 package cn.zlion;
 
+import cn.zlion.dao.ClusterDataDao;
+import cn.zlion.dao.DataResultDao;
+import cn.zlion.pagenationUtil.PageResult;
 import cn.zlion.service.TableNameException;
 import cn.zlion.service.YbTestService;
 import org.junit.Test;
@@ -10,26 +13,28 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
 
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ZnshBakApplicationTests {
 
+//	@Autowired
+//	private YbTestService ybTestService;
+//	@Autowired
+//	private DataResultDao dataResultDao;
+
 	@Autowired
-	private YbTestService ybTestService;
+	private ClusterDataDao clusterDataDao;
 
 	@Test
 	public void contextLoads() {
-
-		try {
-			ybTestService.saveClusterDataToYbTest("TestApp");
-		}catch (IOException e){
-			e.printStackTrace();
-		}catch (URISyntaxException e){
-			e.printStackTrace();
-		}catch (TableNameException e){
-			e.printStackTrace();
+		PageResult pageResult = clusterDataDao.findByPage("TestApp", 1, 100, "T_RESULT_TASK");
+		List<Map<String, Object>> datas = (List<Map<String,Object>>) pageResult.get("data");
+		for (Map data : datas){
+			System.out.println(data.get("pk"));
 		}
 
 	}

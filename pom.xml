@@ -59,6 +59,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>uestc.ercl.znsh</groupId>
+			<artifactId>znsh-common</artifactId>
+			<version>0.1</version>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
@@ -79,5 +85,12 @@
 		</plugins>
 	</build>
 
+
+	<repositories>
+		<repository>
+			<id>java.net</id>
+			<url>http://192.168.10.200:8081/repository/znsh</url>
+		</repository>
+	</repositories>
 
 </project>

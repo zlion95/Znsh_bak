@@ -5,9 +5,17 @@ import java.sql.Timestamp;
 /**
  * Created by zzs on 10/8/16.
  */
-//@Entity
 public class JobResult {
     public static String TABLE_NAME = "T_RESULT_JOB";
+    public static String TABLE_CREATE_SQL = "( pk VARCHAR(32) PRIMARY KEY NOT NULL," +
+            " pk_t VARCHAR(32) NOT NULL," +
+            " job_id VARCHAR(20) NOT NULL," +
+            " msg VARCHAR(128)," +
+            " summary CLOB," +
+            " time_start TIMESTAMP WITH TIME ZONE NOT NULL," +
+            " time_finish TIMESTAMP WITH TIME ZONE NOT NULL )";
+
+    public static String TABLE_DATA_INSERT_SQL = "(pk, pk_t, job_id, msg, summary, time_start, time_finish) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     private String pk;
 

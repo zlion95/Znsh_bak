@@ -4,6 +4,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by zzs on 10/8/16.
@@ -22,7 +23,9 @@ public class Pagination {
 
     private int endLine;
 
-    private List ResultList;
+    private List resultList;
+
+    private Map<String, Object> resultMap;
 
     public Pagination(String sql, JdbcTemplate jdbcTemplate, int numPerPage, int currentPage, RowMapper rowMapper) {
 
@@ -54,6 +57,41 @@ public class Pagination {
 
         try{
             setResultList(jdbcTemplate.query(paginationSql, rowMapper));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public Pagination(String sql, JdbcTemplate jdbcTemplate, int numPerPage, int currentPage) {
+
+        if (jdbcTemplate == null){
+            throw new IllegalArgumentException("JdbcTemplate can't be null");
+        }
+        else if (sql==null || "".equals(sql)){
+            throw new IllegalArgumentException("SQL statement can't be empty");
+        }
+
+        this.numPerPage = numPerPage;
+        this.currentPage = currentPage;
+
+        //获取查询数据的总行数
+        String totalsql = "SELECT count(*) FROM (" + sql + ") AS total";
+        try{
+            setTotalRows(jdbcTemplate.queryForObject(totalsql, Integer.class));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        setTotalPages();
+
+        setBeginLine();
+
+        setEndLine();
+
+        String paginationSql = sql + " ORDER BY pk" + " limit " + numPerPage + " offset " + getBeginLine();
+
+        try{
+            setResultList(jdbcTemplate.queryForList(paginationSql));
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -122,11 +160,20 @@ public class Pagination {
     }
 
     public List getResultList() {
-        return ResultList;
+        return resultList;
     }
 
     public void setResultList(List resultList) {
-        ResultList = resultList;
+        this.resultList = resultList;
+    }
+
+
+    public void setResultMap(Map<String, Object> resultMap){
+        this.resultMap = resultMap;
+    }
+
+    public Map<String, Object> getResultMap(){
+        return resultMap;
     }
 
 }

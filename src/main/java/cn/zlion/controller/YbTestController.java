@@ -31,21 +31,18 @@ public class YbTestController {
     public Result bakClusterDate(HttpServletRequest request){
         Result jsonRender = new Result();
 
-        String appId = request.getParameter("app_id");
+        String appId = "";
+        try{
+            appId = request.getParameter("app_id");
+        }catch (NullPointerException e){
+            e.printStackTrace();
+            jsonRender.put("Code", 104);
+            jsonRender.put("Msg", "app_id can't be empty!");
+        }
 
         try {
             ybTestService.saveClusterDataToYbTest(appId);
-        } catch (URISyntaxException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-            jsonRender.put("Code", 103);
-            jsonRender.put("Msg", e1.getMessage());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            jsonRender.put("Code", 103);
-            jsonRender.put("Msg", e.getMessage());
-        } catch (TableNameException e){
+        } catch (URISyntaxException|IOException|TableNameException e) {
             e.printStackTrace();
             jsonRender.put("Code", 103);
             jsonRender.put("Msg", e.getMessage());
@@ -53,5 +50,7 @@ public class YbTestController {
 
         return jsonRender;
     }
+
+
 
 }

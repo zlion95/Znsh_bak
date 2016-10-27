@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({ResultHttpSetting.class})
+@EnableConfigurationProperties({ResultHttpSetting.class, SchemaSetting.class, DynamicTableSetting.class})
 public class ZnshBakApplication {
 
 	public static void main(String[] args) {

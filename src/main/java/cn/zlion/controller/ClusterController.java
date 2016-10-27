@@ -10,13 +10,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 /**
  * Created by zzs on 10/8/16.
  */
 @RestController
 @EnableAutoConfiguration
 @RequestMapping(value = "/cluster")
-public class ClusterController {
+public class                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ClusterController {
 
     private ClusterService clusterService;
 
@@ -31,12 +34,21 @@ public class ClusterController {
         return jsonRender;
     }
 
-    @RequestMapping(value = "/result", method = RequestMethod.GET)
+    @RequestMapping(value = "/data", method = RequestMethod.GET)
     public Result getResult(HttpServletRequest request){
 
         Result jsonRender = new Result();
         String appId = request.getParameter("app_id");
         String resultTableName = request.getParameter("table");
+        try{
+            appId = URLDecoder.decode(appId, "UTF-8");
+            resultTableName = URLDecoder.decode(resultTableName, "UTF-8");
+        }catch (UnsupportedEncodingException e){
+            e.printStackTrace();
+            jsonRender.put("Code", 102);
+            jsonRender.put("Msg", e.getMessage());
+            return jsonRender;
+        }
         int page = 1, rows = 100;
         //分页的基本参数，根据需要自己设置需要的参数
         if (!(request.getParameter("page")==null||request.getParameter("page").equals(""))
@@ -56,13 +68,5 @@ public class ClusterController {
         return jsonRender;
     }
 
-    @RequestMapping(value = "/result/recover", method = RequestMethod.POST)
-    public Result recoverResult(HttpServletRequest request){
-        Result jsonRender = new Result();
-
-
-
-        return jsonRender;
-    }
 
 }

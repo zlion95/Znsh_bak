@@ -5,6 +5,15 @@ package cn.zlion.domain;
  */
 public class RuleResult {
     public static String TABLE_NAME = "T_RESULT_RULE";
+    public static String TABLE_CREATE_SQL = "( pk VARCHAR(32) PRIMARY KEY NOT NULL," +
+            " pk_j VARCHAR(32) NOT NULL," +
+            " rule_id VARCHAR(20) NOT NULL," +
+            " rule_info VARCHAR(256) NOT NULL," +
+            " warn_level SMALLINT NOT NULL," +
+            " advice VARCHAR(128)," +
+            " msg VARCHAR(128)," +
+            " returns CLOB )";
+    public static String TABLE_DATA_INSERT_SQL = "(pk, pk_j, rule_id, rule_info, warn_level, advice, msg, returns) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     private String pk;
     private String pk_j;
