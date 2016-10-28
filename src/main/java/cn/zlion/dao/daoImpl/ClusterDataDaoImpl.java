@@ -42,14 +42,17 @@ public class ClusterDataDaoImpl implements ClusterDataDao{
     public PageResult findByPage(String app_id, int curPage, int pageRows, String tableName) {
 
         Pagination pagination = null;
-        String sql = "SELECT * FROM \"" + app_id + "\".\"" + tableName + "\" ORDER BY pk";
+        String sql = "SELECT * FROM \"" + app_id + "\".\"" + tableName + "\"";
         if (tableName.equals(JobResult.TABLE_NAME)){
+            sql = sql + " ORDER BY pk";
             pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new JobResultRowMapper());
         }
         else if (tableName.equals(TaskResult.TABLE_NAME)){
+            sql = sql + " ORDER BY pk";
             pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new TaskResultRowMapper());
         }
         else if (tableName.equals(RuleResult.TABLE_NAME)){
+            sql = sql + " ORDER BY pk";
             pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new RuleResultRowMapper());
         }
         else{

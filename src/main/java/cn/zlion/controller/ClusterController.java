@@ -38,20 +38,26 @@ public class                                                                    
         return jsonRender;
     }
 
+    /**
+     * 这一部分的请求可以改成队列的形式，配置一个参数作为每次请求的字节数大小限制，
+     * 每次取不大于最大字节数的大小来作为传输的记录数据，现在先把接口的主要功能完成，这个队列的后面再试着实现它
+     * @param request
+     * @return
+     */
     @RequestMapping(value = "/data", method = RequestMethod.GET)
     public Result getResult(HttpServletRequest request){
 
         Result jsonRender = new Result();
         String appId = request.getParameter("app_id");
         String resultTableName = request.getParameter("table");
-        String bakTimeString = null;
-        Date baktime = new Date();
+        String lastBakTimeString = null;
+        Date lastBaktime = new Date();
         try{
             appId = URLDecoder.decode(appId, "UTF-8");
             resultTableName = URLDecoder.decode(resultTableName, "UTF-8");
             if (request.getParameter("update-time") != null && !request.getParameter("update-time").equals("")){
-                bakTimeString = URLDecoder.decode(request.getParameter("update-time"), "UTF-8");
-                baktime.setTime(Long.parseLong(bakTimeString));
+                lastBakTimeString = URLDecoder.decode(request.getParameter("update-time"), "UTF-8");
+                lastBaktime.setTime(Long.parseLong(lastBakTimeString));
             }
         }catch (UnsupportedEncodingException e){
             e.printStackTrace();
@@ -68,11 +74,11 @@ public class                                                                    
         }
         try{
             PageResult pageResult = null;
-            if (bakTimeString == null){
+            if (lastBakTimeString == null){
                 pageResult = clusterService.getPageResultByTableName(appId, resultTableName, page, rows);
             }
             else{
-                pageResult = clusterService.getPageResultByTableNameAndTime(appId, resultTableName, page, rows, baktime);
+                pageResult = clusterService.getPageResultByTableNameAndTime(appId, resultTableName, page, rows, lastBaktime);
             }
             jsonRender.put("Data", pageResult);
             jsonRender.put("Code", 200);

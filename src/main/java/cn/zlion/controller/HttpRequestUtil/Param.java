@@ -1,9 +1,13 @@
 package cn.zlion.controller.HttpRequestUtil;
 
+import java.util.List;
+
 /**
+ * An entity for for Get method uri builder.
  * Created by zzs on 10/12/16.
  */
 public class Param {
+
 
     private String key;
     private String value;
@@ -43,5 +47,11 @@ public class Param {
 
     public String getUriParam(){
         return key + "=" + value;
+    }
+
+
+    public Param(String key, List<String> values){
+        this.key = key;
+
     }
 }

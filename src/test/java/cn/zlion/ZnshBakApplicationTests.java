@@ -2,6 +2,7 @@ package cn.zlion;
 
 import cn.zlion.dao.ClusterDataDao;
 import cn.zlion.dao.DataResultDao;
+import cn.zlion.domain.Sheet;
 import cn.zlion.pagenationUtil.PageResult;
 import cn.zlion.service.TableNameException;
 import cn.zlion.service.YbTestService;
@@ -22,8 +23,8 @@ import java.util.Map;
 @SpringBootTest
 public class ZnshBakApplicationTests {
 
-//	@Autowired
-//	private YbTestService ybTestService;
+	@Autowired
+	private YbTestService ybTestService;
 //	@Autowired
 //	private DataResultDao dataResultDao;
 
@@ -37,6 +38,9 @@ public class ZnshBakApplicationTests {
 //		for (Map data : datas){
 //			System.out.println(data.get("pk"));
 //		}
+
+		List<Sheet> sheets = ybTestService.sheets();
+		System.out.println(sheets);
 
 	}
 

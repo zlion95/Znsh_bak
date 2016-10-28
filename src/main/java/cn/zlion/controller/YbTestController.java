@@ -52,14 +52,14 @@ public class YbTestController {
         return jsonRender;
     }
 
-    @RequestMapping(value = "/structure", method = RequestMethod.GET)
-    public Map<String, Object> getDynamicStringStruct(HttpServletRequest request){
-
-        Map<String, Object> result = ybTestService.getMapInterface();
-
-        return result;
-
-    }
+//    @RequestMapping(value = "/structure", method = RequestMethod.GET)
+//    public Map<String, Object> getDynamicStringStruct(HttpServletRequest request){
+//
+////        Map<String, Object> result = ybTestService.getMapInterface();
+//
+//        return result;
+//
+//    }
 
 
 }

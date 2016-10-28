@@ -1,7 +1,9 @@
 package cn.zlion.service;
 
+import ch.qos.logback.classic.db.names.TableName;
 import cn.zlion.ResultHttpSetting;
 import cn.zlion.SchemaSetting;
+import cn.zlion.controller.HttpRequestUtil.HttpRequestClientUtil;
 import cn.zlion.controller.HttpRequestUtil.Param;
 import cn.zlion.controller.HttpRequestUtil.RequestParamUtil;
 import cn.zlion.dao.DataResultDao;
@@ -9,6 +11,7 @@ import cn.zlion.domain.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.omg.CORBA.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.client.ClientHttpRequest;
@@ -43,12 +46,6 @@ public class YbTestService {
     @Autowired
     private DataResultDao dataResultDao;
 
-    @Autowired
-    @Qualifier("oracle")
-    private DataSource dataSource;
-
-
-
     public void saveClusterDataToYbTest(String appId) throws IOException, URISyntaxException, TableNameException {
 
         int presentPage = 1;
@@ -63,74 +60,166 @@ public class YbTestService {
         requestParamUtil.addParam("table", null);
 
         if (!dataResultDao.checkUserExist(appId)){
+            //初次备份创建表并全部移入，后面需要改掉
             dataResultDao.createAppSchema(appId, schemaSetting.getNewSchemaPass());
             dataResultDao.createResultTableOnSchema(appId);
 
             for (String tableName: tables){
-
-                presentPage = 1;
-                Param tableParam = new Param("table", tableName);
-                pageParam = new Param("page", presentPage);
-
-                requestParamUtil.setParam(tableParam);
-                requestParamUtil.setParam(pageParam);
-
-                URI uri = new URI(requestParamUtil.getURI());
-
-                JSONObject receiveJsonResult = this.clientRequest(uri);
-
-                if(receiveJsonResult.getInteger("Code") == 200){
-
-                    JSONObject pageData = receiveJsonResult.getJSONObject("Data");
-                    this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
-                    int pageSize = pageData.getInteger("totalPages");
-                    for (presentPage = 2; presentPage <= pageSize; ++presentPage){
-
-                        System.out.println(presentPage);
-
-                        pageParam.setValue(presentPage);
-                        requestParamUtil.setParam(pageParam);
-                        uri = new URI(requestParamUtil.getURI());
-
-                        receiveJsonResult = this.clientRequest(uri);
-                        if (receiveJsonResult.getInteger("Code") == 200){
-                            pageData = receiveJsonResult.getJSONObject("Data");
-                            this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
-                        }
-                        else if (receiveJsonResult.getInteger("Code") == 103){
-                            throw new TableNameException(receiveJsonResult.getString("Msg"));
-                        }
-                    }
+                try{
+                    listRequest(requestParamUtil, appId, tableName);
+                }catch (ClusterRequestException e){
+                    e.printStackTrace();
                 }
             }
         }
         else{
             //审核结果表已存在，此时只需要更新表中数据即可
+            //Task单独处理
+            String taskTable = "T_RESULT_TASK";
+            Date lastUpdateTime = dataResultDao.getTaskLastUpdateTime(appId);
+            requestParamUtil.addParam(new Param("update-time", Long.toString(lastUpdateTime.getTime())));
+            List<String> taskPks = null;
+
+            try{
+                //Job和Rule的处理
+                tables.remove(taskTable);
+                requestParamUtil.addParam(new Param("pks", taskPks));
+                taskPks = listRequestUpdate(requestParamUtil, appId, taskTable);
+
+
+            }catch (ClusterRequestException e){
+                //考虑一下错误处理
+                e.printStackTrace();
+                return;
+            }
+
 
 
         }
 
+    }
 
+    /**
+     * 请求解析并存储获取到的数据
+     * @param requestParamUtil
+     * @param appId
+     * @param tableName
+     * @throws URISyntaxException
+     * @throws IOException
+     * @throws TableNameException
+     * @throws ClusterRequestException
+     */
+    public void listRequest(RequestParamUtil requestParamUtil, String appId, String tableName)
+            throws URISyntaxException, IOException, TableNameException, ClusterRequestException{
 
+        int presentPage = 1;
+        Param tableParam = new Param("table", tableName);
+        Param pageParam = new Param("page", presentPage);
+        requestParamUtil.setParam(tableParam);
+        requestParamUtil.setParam(pageParam);
+
+        URI uri = new URI(requestParamUtil.getURI());
+//            JSONObject receiveJsonResult = this.clientRequest(uri);
+        JSONObject receiveJsonResult = HttpRequestClientUtil.httpRequest(requestParamUtil);
+        if(receiveJsonResult.getInteger("Code") == 200){
+
+            JSONObject pageData = receiveJsonResult.getJSONObject("Data");
+            this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
+            int pageSize = pageData.getInteger("totalPages");
+            for (presentPage = 2; presentPage <= pageSize; ++presentPage){
+
+                System.out.println(presentPage);
+
+                getRequestJsonResult(requestParamUtil, presentPage, appId, tableName);
+            }
+        }
+        else{
+            //请求数据错误异常
+            throw new ClusterRequestException(receiveJsonResult.getString("Msg"));
+        }
+    }
+
+    public List<String> listRequestUpdate(RequestParamUtil requestParamUtil, String appId, String tableName)
+            throws URISyntaxException, IOException, TableNameException, ClusterRequestException{
+
+        int presentPage = 1;
+        Param tableParam = new Param("table", tableName);
+        Param pageParam = new Param("page", presentPage);
+        requestParamUtil.setParam(tableParam);
+        requestParamUtil.setParam(pageParam);
+
+        URI uri = new URI(requestParamUtil.getURI());
+        JSONObject receiveJsonResult = HttpRequestClientUtil.httpRequest(requestParamUtil);
+        HashSet<String> pkHashSet = new HashSet<String>();
+
+        if(receiveJsonResult.getInteger("Code") == 200){
+
+            JSONObject pageData = receiveJsonResult.getJSONObject("Data");
+            this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
+            int pageSize = pageData.getInteger("totalPages");
+            for (presentPage = 2; presentPage <= pageSize; ++presentPage){
+
+                System.out.println(presentPage);
+
+                JSONArray datas = getRequestJsonResult(requestParamUtil, presentPage, appId, tableName);
+                HashSet<String> pks = extractPkList(datas);
+                pkHashSet.addAll(pks);
+            }
+        }
+        else{
+            //请求数据错误异常
+            throw new ClusterRequestException(receiveJsonResult.getString("Msg"));
+        }
+        return new ArrayList<String>(pkHashSet);
     }
 
 
-    public JSONObject clientRequest(URI uri) throws IOException, URISyntaxException{
 
-        SimpleClientHttpRequestFactory schr = new SimpleClientHttpRequestFactory();
-        ClientHttpRequest chr = schr.createRequest(uri, resultHttpSetting.getHttpMethod());
-        //?page=1&rows=100&app_id=TestApp&table=T_RESULT_JOB
-        //chr.getBody().write(param.getBytes());//body中设置请求参数
-        ClientHttpResponse res = chr.execute();
-        InputStream is = res.getBody(); //获得返回数据(流)
-        InputStreamReader isr = new InputStreamReader(is);
-        BufferedReader br = new BufferedReader(isr);
+    private JSONArray getRequestJsonResult(RequestParamUtil requestParamUtil, int presentPage, String appId, String tableName)
+            throws URISyntaxException, IOException, TableNameException{
+        requestParamUtil.setParam(new Param("page", presentPage));
+        URI uri = new URI(requestParamUtil.getURI());
+        JSONArray datas = null;
 
-        String jsonString = br.readLine();
-        JSONObject receiveJsonResult = JSON.parseObject(jsonString);
-
-        return receiveJsonResult;
+//        JSONObject receiveJsonResult = this.clientRequest(uri);
+        JSONObject receiveJsonResult = HttpRequestClientUtil.httpRequest(requestParamUtil);
+        if (receiveJsonResult.getInteger("Code") == 200){
+            JSONObject pageData = receiveJsonResult.getJSONObject("Data");
+            datas = pageData.getJSONArray("data");
+            this.saveStaticData(datas, appId, tableName);
+        }
+        else if (receiveJsonResult.getInteger("Code") == 103){
+            throw new TableNameException(receiveJsonResult.getString("Msg"));
+        }
+        return datas;
     }
+
+
+
+//    /**
+//     * 请求并返回已解析的JSONObject
+//     * @param uri
+//     * @return receiveJsonResult
+//     * @throws IOException
+//     * @throws URISyntaxException
+//     */
+//    public JSONObject clientRequest(URI uri) throws IOException, URISyntaxException{
+//
+//        SimpleClientHttpRequestFactory schr = new SimpleClientHttpRequestFactory();
+//        ClientHttpRequest chr = schr.createRequest(uri, resultHttpSetting.getHttpMethod());
+//        //?page=1&rows=100&app_id=TestApp&table=T_RESULT_JOB
+//        //chr.getBody().write(param.getBytes());//body中设置请求参数
+//        ClientHttpResponse res = chr.execute();
+//        InputStream is = res.getBody(); //获得返回数据(流)
+//        InputStreamReader isr = new InputStreamReader(is);
+//        BufferedReader br = new BufferedReader(isr);
+//
+//        String jsonString = br.readLine();
+//        JSONObject receiveJsonResult = JSON.parseObject(jsonString);
+//
+//        return receiveJsonResult;
+//    }
+
 
 
     @Transactional
@@ -164,35 +253,112 @@ public class YbTestService {
 
     }
 
+    //获取新添加的数据
+    public HashSet<String> extractPkList(JSONArray taskResults){
+
+        HashSet<String> hs = new HashSet<String>();
+        for (Iterator jsonObjectIterator = taskResults.subList(0, taskResults.size()).iterator(); jsonObjectIterator.hasNext(); ) {
+            TaskResult taskResult = ((JSONObject) jsonObjectIterator.next()).toJavaObject(TaskResult.class);
+            hs.add(taskResult.getPk());
+        }
+
+        return hs;
+    }
 
 
-    public Map<String, Object> getMapInterface(){
-        Map<String, Object> result = new HashMap<String, Object>();
 
-        List<Field> fields = new ArrayList<Field>();
-        Field field = new Field();
-        field.setPk(1231231);
-        field.setId("jd124141asdf");
-        field.setDataType(DataType.TEXT);
-        field.setNullable(true);
-        field.setName("name");
-        field.setSheetPk(123123141);
-        fields.add(field);
-
-
-        List<Sheet> sheets = new ArrayList<Sheet>();
-        Sheet sheet = new Sheet();
-
-        sheet.setAppId("TestApp");
-        sheet.setDesc("2333");
-        sheet.setName("aaaa");
-        sheet.setId("sdfa23123131");
-        sheet.setPk(123123141);
-        sheet.setFields(fields);
-        sheets.add(sheet);
-
-        result.put("TestApp", sheets);
-        return result;
+    // 测试数据
+    public static List<Sheet> sheets()
+    {
+        //-----------------------------------------------------
+        Field f_id = new Field();
+        f_id.setPk(3645);
+        f_id.setId("id");
+        f_id.setName("编号");
+        f_id.setDesc("课程编号");
+        f_id.setDataType(DataType.NUMBER);
+        f_id.setNullable(false);
+        //
+        Field f_name = new Field();
+        f_name.setPk(5441);
+        f_name.setId("name");
+        f_name.setName("名称");
+        f_name.setDesc("课程名称");
+        f_name.setDataType(DataType.TEXT);
+        f_name.setNullable(false);
+        //
+        Field f_max = new Field();
+        f_max.setPk(6546);
+        f_max.setId("maxLearners");
+        f_max.setName("最大人数");
+        f_max.setDesc("该课程最多选课人数");
+        f_max.setDataType(DataType.NUMBER);
+        f_max.setNullable(false);
+        //
+        Field f_cur = new Field();
+        f_cur.setPk(365653);
+        f_cur.setId("curLearners");
+        f_cur.setName("当前人数");
+        f_cur.setDesc("该课程当前选课人数");
+        f_cur.setDataType(DataType.NUMBER);
+        f_cur.setNullable(false);
+        //
+        Sheet t_cource = new Sheet();
+        t_cource.setPk(321505);
+        t_cource.setId("Course");
+        t_cource.setName("课程信息表");
+        t_cource.setDesc("可选课程的信息");
+        t_cource.addField(f_id);
+        t_cource.addField(f_name);
+        t_cource.addField(f_max);
+        t_cource.addField(f_cur);
+        //-----------------------------------------------------
+        Field f_cid = new Field();
+        f_cid.setPk(352656);
+        f_cid.setId("courseId");
+        f_cid.setName("课程编号");
+        f_cid.setDesc("选课申请中的课程编号");
+        f_cid.setDataType(DataType.NUMBER);
+        f_cid.setNullable(false);
+        //
+        Field f_sname = new Field();
+        f_sname.setPk(98765);
+        f_sname.setId("stuName");
+        f_sname.setName("学生姓名");
+        f_sname.setDesc("选课申请中的学生姓名");
+        f_sname.setDataType(DataType.TEXT);
+        f_sname.setNullable(false);
+        //
+        Field f_grade = new Field();
+        f_grade.setPk(857498);
+        f_grade.setId("stuGrade");
+        f_grade.setName("学生年级");
+        f_grade.setDesc("选课申请中的学生所在的年级");
+        f_grade.setDataType(DataType.NUMBER);
+        f_grade.setNullable(false);
+        //
+        Field f_class = new Field();
+        f_class.setPk(6123);
+        f_class.setId("stuClass");
+        f_class.setName("学生班号");
+        f_class.setDesc("选课申请中的学生所在的班");
+        f_class.setDataType(DataType.NUMBER);
+        f_class.setNullable(false);
+        //
+        Sheet t_registry = new Sheet();
+        t_registry.setPk(52456);
+        t_registry.setId("CourseRegistry");
+        t_registry.setName("选课申请表");
+        t_registry.setDesc("学生提交的选课信息");
+        t_registry.addField(f_cid);
+        t_registry.addField(f_sname);
+        t_registry.addField(f_grade);
+        t_registry.addField(f_class);
+        //
+        List<Sheet> sheets = new ArrayList<>();
+        sheets.add(t_cource);
+        sheets.add(t_registry);
+        return sheets;
     }
 
 
