@@ -1,6 +1,5 @@
 package cn.zlion.dao.daoImpl;
 
-import cn.zlion.ResultHttpSetting;
 import cn.zlion.dao.DataResultDao;
 import cn.zlion.dao.domainMapper.JobResultRowMapper;
 import cn.zlion.dao.domainMapper.RuleResultRowMapper;
@@ -20,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -37,37 +38,37 @@ public class DataResultDaoImpl implements DataResultDao {
     private JdbcTemplate oracleJdbcTemplate;
 
 
-    /**
-     * 分页查询应用对应的表数据, 静态审核结果表和动态用户表
-     * @param app_id
-     * @param curPage
-     * @param pageRows
-     * @param tableName
-     * @return
-     */
-    @Override
-    @Transactional(readOnly = true)
-    public PageResult findByPage(String app_id, int curPage, int pageRows, String tableName) {
-
-        Pagination pagination = null;
-        if (tableName.equals(JobResult.TABLE_NAME)){
-            String sql = "SELECT * FROM \"" + app_id + "\".\"" + JobResult.TABLE_NAME + "\"";
-            pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new JobResultRowMapper());
-        }
-        else if (tableName.equals(TaskResult.TABLE_NAME)){
-            String sql = "SELECT * FROM \"" + app_id + "\".\"" + TaskResult.TABLE_NAME + "\"";
-            pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new TaskResultRowMapper());
-        }
-        else if (tableName.equals(RuleResult.TABLE_NAME)){
-            String sql = "SELECT * FROM \"" + app_id + "\".\"" + RuleResult.TABLE_NAME + "\"";
-            pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new RuleResultRowMapper());
-        }
-        else{
-            //动态表查询
-        }
-
-        return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(),pagination.getResultList());
-    }
+//    /**
+//     * 分页查询应用对应的表数据, 静态审核结果表和动态用户表
+//     * @param app_id
+//     * @param curPage
+//     * @param pageRows
+//     * @param tableName
+//     * @return
+//     */
+//    @Override
+//    @Transactional(readOnly = true)
+//    public PageResult findByPage(String app_id, int curPage, int pageRows, String tableName) {
+//
+//        Pagination pagination = null;
+//        if (tableName.equals(JobResult.TABLE_NAME)){
+//            String sql = "SELECT * FROM \"" + app_id + "\".\"" + JobResult.TABLE_NAME + "\" ORDER BY pk";
+//            pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new JobResultRowMapper());
+//        }
+//        else if (tableName.equals(TaskResult.TABLE_NAME)){
+//            String sql = "SELECT * FROM \"" + app_id + "\".\"" + TaskResult.TABLE_NAME + "\" ORDER BY pk";
+//            pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new TaskResultRowMapper());
+//        }
+//        else if (tableName.equals(RuleResult.TABLE_NAME)){
+//            String sql = "SELECT * FROM \"" + app_id + "\".\"" + RuleResult.TABLE_NAME + "\" ORDER BY pk";
+//            pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new RuleResultRowMapper());
+//        }
+//        else{
+//            //动态表查询
+//        }
+//
+//        return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(),pagination.getResultList());
+//    }
 
 
     /**
@@ -290,4 +291,19 @@ public class DataResultDaoImpl implements DataResultDao {
         String sql = "Select count(*) from \"" + appId + "\".\"" + table + "\"";
         return oracleJdbcTemplate.queryForObject(sql, Integer.class);
     }
+
+
+
+    //获取最新更新的任务时间
+    @Override
+    public Date getTaskLastUpdateTime(String appId){
+
+        String sql = "SELECT max(time_arrival) FROM \"" + appId + "\".\"T_RESULT_TASK\"";
+
+        Timestamp lastUpdateTimeStamp = oracleJdbcTemplate.queryForObject(sql, Timestamp.class);
+
+        return new Date(lastUpdateTimeStamp.getTime());
+    }
+
+
 }

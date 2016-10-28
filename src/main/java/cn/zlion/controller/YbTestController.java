@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map;
 
 /**
  * Created by zzs on 10/9/16.
@@ -51,6 +52,14 @@ public class YbTestController {
         return jsonRender;
     }
 
+    @RequestMapping(value = "/structure", method = RequestMethod.GET)
+    public Map<String, Object> getDynamicStringStruct(HttpServletRequest request){
+
+        Map<String, Object> result = ybTestService.getMapInterface();
+
+        return result;
+
+    }
 
 
 }

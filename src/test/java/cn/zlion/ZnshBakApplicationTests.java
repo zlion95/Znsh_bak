@@ -13,6 +13,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,11 +32,11 @@ public class ZnshBakApplicationTests {
 
 	@Test
 	public void contextLoads() {
-		PageResult pageResult = clusterDataDao.findByPage("TestApp", 1, 100, "T_RESULT_TASK");
-		List<Map<String, Object>> datas = (List<Map<String,Object>>) pageResult.get("data");
-		for (Map data : datas){
-			System.out.println(data.get("pk"));
-		}
+//		PageResult pageResult = clusterDataDao.findByTimeAndPage("TestApp", 1, 100, "T_RESULT_TASK", );
+//		List<Map<String, Object>> datas = (List<Map<String,Object>>) pageResult.get("data");
+//		for (Map data : datas){
+//			System.out.println(data.get("pk"));
+//		}
 
 	}
 

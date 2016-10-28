@@ -88,7 +88,7 @@ public class Pagination {
 
         setEndLine();
 
-        String paginationSql = sql + " ORDER BY pk" + " limit " + numPerPage + " offset " + getBeginLine();
+        String paginationSql = sql + " limit " + numPerPage + " offset " + getBeginLine();
 
         try{
             setResultList(jdbcTemplate.queryForList(paginationSql));

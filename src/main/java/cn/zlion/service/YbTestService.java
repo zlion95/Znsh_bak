@@ -5,9 +5,7 @@ import cn.zlion.SchemaSetting;
 import cn.zlion.controller.HttpRequestUtil.Param;
 import cn.zlion.controller.HttpRequestUtil.RequestParamUtil;
 import cn.zlion.dao.DataResultDao;
-import cn.zlion.domain.JobResult;
-import cn.zlion.domain.RuleResult;
-import cn.zlion.domain.TaskResult;
+import cn.zlion.domain.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -18,6 +16,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uestc.ercl.znsh.common.constant.DataType;
 
 import javax.sql.DataSource;
 import java.io.BufferedReader;
@@ -66,45 +65,52 @@ public class YbTestService {
         if (!dataResultDao.checkUserExist(appId)){
             dataResultDao.createAppSchema(appId, schemaSetting.getNewSchemaPass());
             dataResultDao.createResultTableOnSchema(appId);
-        }
 
-        for (String tableName: tables){
+            for (String tableName: tables){
 
-            presentPage = 1;
-            Param tableParam = new Param("table", tableName);
-            pageParam = new Param("page", presentPage);
+                presentPage = 1;
+                Param tableParam = new Param("table", tableName);
+                pageParam = new Param("page", presentPage);
 
-            requestParamUtil.setParam(tableParam);
-            requestParamUtil.setParam(pageParam);
+                requestParamUtil.setParam(tableParam);
+                requestParamUtil.setParam(pageParam);
 
-            URI uri = new URI(requestParamUtil.getURI());
+                URI uri = new URI(requestParamUtil.getURI());
 
-            JSONObject receiveJsonResult = this.clientRequest(uri);
+                JSONObject receiveJsonResult = this.clientRequest(uri);
 
-            if(receiveJsonResult.getInteger("Code") == 200){
+                if(receiveJsonResult.getInteger("Code") == 200){
 
-                JSONObject pageData = receiveJsonResult.getJSONObject("Data");
-                this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
-                int pageSize = pageData.getInteger("totalPages");
-                for (presentPage = 2; presentPage <= pageSize; ++presentPage){
+                    JSONObject pageData = receiveJsonResult.getJSONObject("Data");
+                    this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
+                    int pageSize = pageData.getInteger("totalPages");
+                    for (presentPage = 2; presentPage <= pageSize; ++presentPage){
 
-                    System.out.println(presentPage);
+                        System.out.println(presentPage);
 
-                    pageParam.setValue(presentPage);
-                    requestParamUtil.setParam(pageParam);
-                    uri = new URI(requestParamUtil.getURI());
+                        pageParam.setValue(presentPage);
+                        requestParamUtil.setParam(pageParam);
+                        uri = new URI(requestParamUtil.getURI());
 
-                    receiveJsonResult = this.clientRequest(uri);
-                    if (receiveJsonResult.getInteger("Code") == 200){
-                        pageData = receiveJsonResult.getJSONObject("Data");
-                        this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
-                    }
-                    else if (receiveJsonResult.getInteger("Code") == 103){
-                        throw new TableNameException(receiveJsonResult.getString("Msg"));
+                        receiveJsonResult = this.clientRequest(uri);
+                        if (receiveJsonResult.getInteger("Code") == 200){
+                            pageData = receiveJsonResult.getJSONObject("Data");
+                            this.saveStaticData(pageData.getJSONArray("data"), appId, tableName);
+                        }
+                        else if (receiveJsonResult.getInteger("Code") == 103){
+                            throw new TableNameException(receiveJsonResult.getString("Msg"));
+                        }
                     }
                 }
             }
         }
+        else{
+            //审核结果表已存在，此时只需要更新表中数据即可
+
+
+        }
+
+
 
     }
 
@@ -158,5 +164,46 @@ public class YbTestService {
 
     }
 
+
+
+    public Map<String, Object> getMapInterface(){
+        Map<String, Object> result = new HashMap<String, Object>();
+
+        List<Field> fields = new ArrayList<Field>();
+        Field field = new Field();
+        field.setPk(1231231);
+        field.setId("jd124141asdf");
+        field.setDataType(DataType.TEXT);
+        field.setNullable(true);
+        field.setName("name");
+        field.setSheetPk(123123141);
+        fields.add(field);
+
+
+        List<Sheet> sheets = new ArrayList<Sheet>();
+        Sheet sheet = new Sheet();
+
+        sheet.setAppId("TestApp");
+        sheet.setDesc("2333");
+        sheet.setName("aaaa");
+        sheet.setId("sdfa23123131");
+        sheet.setPk(123123141);
+        sheet.setFields(fields);
+        sheets.add(sheet);
+
+        result.put("TestApp", sheets);
+        return result;
+    }
+
+
+    public void saveDynamicData(List<Sheet> sheets, String appId){
+
+        sheets.forEach(sheet -> {
+
+
+
+        });
+
+    }
 
 }

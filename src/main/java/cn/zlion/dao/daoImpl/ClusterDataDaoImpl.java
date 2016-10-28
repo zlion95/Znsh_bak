@@ -15,6 +15,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 /**
  * Created by zzs on 10/25/16.
  */
@@ -39,7 +42,7 @@ public class ClusterDataDaoImpl implements ClusterDataDao{
     public PageResult findByPage(String app_id, int curPage, int pageRows, String tableName) {
 
         Pagination pagination = null;
-        String sql = "SELECT * FROM \"" + app_id + "\".\"" + JobResult.TABLE_NAME + "\"";
+        String sql = "SELECT * FROM \"" + app_id + "\".\"" + tableName + "\" ORDER BY pk";
         if (tableName.equals(JobResult.TABLE_NAME)){
             pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new JobResultRowMapper());
         }
@@ -54,10 +57,32 @@ public class ClusterDataDaoImpl implements ClusterDataDao{
             pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage);
         }
 
-        return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(),pagination.getResultList());
+        return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(), pagination.getResultList());
     }
 
 
+    //只有TaskResult
+    @Override
+    public PageResult findByTimeAndPage(String app_id, int curPage, int pageRows, String tableName, Date lastUpdateTime) {
+
+        Pagination pagination = null;
+        String sql = "SELECT * FROM \"" + app_id + "\".\"" + tableName +
+                "\" WHERE arrival_time > " + new Timestamp(lastUpdateTime.getTime()) + " ORDER BY pk";
+
+        pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new TaskResultRowMapper());
+
+        return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(), pagination.getResultList());
+    }
+
+
+    //JobResult和RuleResult两个表, 联表查询
+    @Override
+    public PageResult findResultByPk(String app_id, int curPage, int pageRows, String tableName, String pk) {
+        Pagination pagination = null;
+
+        String sql = "SELECT ";
+        return null;
+    }
 
     /**
      * 检查表在对应schema中是否存在数据表
@@ -67,8 +92,8 @@ public class ClusterDataDaoImpl implements ClusterDataDao{
      */
     @Override
     public boolean checkTableExist(String appId, String tableName){
-        String sql = "select count(*) from dba_tables where owner=\'" +
-                appId + "\' and table_name=\'" + tableName + "\'";
+        String sql = "select count(*) from information_schema.tables where table_schema='" + appId +
+                "' and table_type='BASE TABLE' and table_name='" + tableName + "'";
         int amount = postgresqlJdbcTemplate.queryForObject(sql, Integer.class);
         if (amount > 0)
             return true;

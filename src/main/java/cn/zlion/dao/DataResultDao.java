@@ -3,6 +3,7 @@ package cn.zlion.dao;
 import cn.zlion.pagenationUtil.PageResult;
 import cn.zlion.service.TableNameException;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ import java.util.List;
  */
 public interface DataResultDao {
 
-    public PageResult findByPage(String app_id, int curPage, int pageRows, String tableName);
+//    public PageResult findByPage(String app_id, int curPage, int pageRows, String tableName);
 
     public void createAppSchema(String appId, String newSchemaPass) throws TableNameException;
 
@@ -27,5 +28,7 @@ public interface DataResultDao {
     public void createResultTableOnSchema(String appId);
 
     public int totalInTable(String appId, String table);
+
+    Date getTaskLastUpdateTime(String appId);
 }
 
