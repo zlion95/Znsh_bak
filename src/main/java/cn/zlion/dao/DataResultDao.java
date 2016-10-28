@@ -29,6 +29,7 @@ public interface DataResultDao {
 
     public int totalInTable(String appId, String table);
 
+    //后面需要将这个方法改为从配置表中读取，直接通过全局的检索效率太差。
     Date getTaskLastUpdateTime(String appId);
 }
 

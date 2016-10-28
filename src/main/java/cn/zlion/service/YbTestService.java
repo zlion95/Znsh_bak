@@ -46,12 +46,19 @@ public class YbTestService {
     @Autowired
     private DataResultDao dataResultDao;
 
+
+    /**
+     * 备份用户的在appId表空间上的数据，当用户的app未创建的时候，
+     * 则通过直接全部存入来实现对数据表的备份，当数据表已经存在的时候则通过上次的更新时间来进行部分数据备份。
+     * @param appId
+     * @throws IOException
+     * @throws URISyntaxException
+     * @throws TableNameException
+     */
     public void saveClusterDataToYbTest(String appId) throws IOException, URISyntaxException, TableNameException {
 
-        int presentPage = 1;
         List<String> tables = resultHttpSetting.getTables();
-
-        Param pageParam = new Param("page", presentPage);
+        Param pageParam = new Param("page", 1);
 
         RequestParamUtil requestParamUtil = new RequestParamUtil(resultHttpSetting.getUrl());
         requestParamUtil.addParam(new Param("app_id", appId));
@@ -79,13 +86,13 @@ public class YbTestService {
             Date lastUpdateTime = dataResultDao.getTaskLastUpdateTime(appId);
             requestParamUtil.addParam(new Param("update-time", Long.toString(lastUpdateTime.getTime())));
             List<String> taskPks = null;
+            requestParamUtil.addParam(new Param("pks", taskPks));
 
             try{
-                //Job和Rule的处理
-                tables.remove(taskTable);
-                requestParamUtil.addParam(new Param("pks", taskPks));
                 taskPks = listRequestUpdate(requestParamUtil, appId, taskTable);
-
+                //Job和Rule的处理
+                requestParamUtil.setParam(new Param("pks", taskPks));
+                tables.remove(taskTable);
 
             }catch (ClusterRequestException e){
                 //考虑一下错误处理

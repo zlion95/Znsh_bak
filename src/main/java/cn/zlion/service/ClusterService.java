@@ -78,7 +78,7 @@ public class ClusterService {
     }
 
     public PageResult getPageResultByTableNameAndPk(String appId, String tableName, int page, int rows, String pk)
-        throws  TableNameException{
+        throws TableNameException{
 
         PageResult pageResult = null;
         if (clusterDataDao.checkTableExist(appId, tableName)){
