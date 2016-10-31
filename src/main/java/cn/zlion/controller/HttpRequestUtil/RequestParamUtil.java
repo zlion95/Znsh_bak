@@ -42,6 +42,9 @@ public class RequestParamUtil {
         paraments.remove(key);
     }
 
+    public Map<String, Object> getParaments() {
+        return paraments;
+    }
 
     public String getURI(){
         if (paraments.isEmpty()){
@@ -54,5 +57,9 @@ public class RequestParamUtil {
             }
             return uri.substring(0, uri.length()-1);
         }
+    }
+
+    public String getURL() {
+        return URL;
     }
 }

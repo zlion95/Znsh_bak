@@ -11,9 +11,11 @@ import cn.zlion.domain.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.httpclient.NameValuePair;
 import org.omg.CORBA.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uestc.ercl.znsh.common.constant.DataType;
 
 import javax.sql.DataSource;
+import javax.validation.constraints.NotNull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,14 +88,22 @@ public class YbTestService {
             String taskTable = "T_RESULT_TASK";
             Date lastUpdateTime = dataResultDao.getTaskLastUpdateTime(appId);
             requestParamUtil.addParam(new Param("update-time", Long.toString(lastUpdateTime.getTime())));
-            List<String> taskPks = null;
-            requestParamUtil.addParam(new Param("pks", taskPks));
+            requestParamUtil.addParam(new Param("pk", ""));
+
 
             try{
-                taskPks = listRequestUpdate(requestParamUtil, appId, taskTable);
+                //获取需要更新的TaskResult的主键集合
+                List<String> taskPks = listRequestUpdate(requestParamUtil, appId, taskTable);
                 //Job和Rule的处理
-                requestParamUtil.setParam(new Param("pks", taskPks));
                 tables.remove(taskTable);
+                for (String tableName : tables){
+                    for (String pk : taskPks){
+                        requestParamUtil.setParam("pk", pk);
+                        listRequestUpdate(requestParamUtil, appId, tableName);
+                    }
+                }
+
+
 
             }catch (ClusterRequestException e){
                 //考虑一下错误处理
@@ -137,7 +148,7 @@ public class YbTestService {
 
                 System.out.println(presentPage);
 
-                getRequestJsonResult(requestParamUtil, presentPage, appId, tableName);
+                getRequestJsonResult(requestParamUtil, presentPage, appId, tableName, HttpMethod.GET);
             }
         }
         else{
@@ -168,7 +179,7 @@ public class YbTestService {
 
                 System.out.println(presentPage);
 
-                JSONArray datas = getRequestJsonResult(requestParamUtil, presentPage, appId, tableName);
+                JSONArray datas = getRequestJsonResult(requestParamUtil, presentPage, appId, tableName, HttpMethod.GET);
                 HashSet<String> pks = extractPkList(datas);
                 pkHashSet.addAll(pks);
             }
@@ -182,14 +193,21 @@ public class YbTestService {
 
 
 
-    private JSONArray getRequestJsonResult(RequestParamUtil requestParamUtil, int presentPage, String appId, String tableName)
+    private JSONArray getRequestJsonResult(RequestParamUtil requestParamUtil, int presentPage,
+                                           String appId, String tableName, HttpMethod method)
             throws URISyntaxException, IOException, TableNameException{
         requestParamUtil.setParam(new Param("page", presentPage));
         URI uri = new URI(requestParamUtil.getURI());
         JSONArray datas = null;
 
-//        JSONObject receiveJsonResult = this.clientRequest(uri);
-        JSONObject receiveJsonResult = HttpRequestClientUtil.httpRequest(requestParamUtil);
+        JSONObject receiveJsonResult = null;
+        if (method == HttpMethod.POST){
+            NameValuePair[] pairs = getPairs(requestParamUtil);
+            receiveJsonResult = HttpRequestClientUtil.httpRequest(requestParamUtil.getURL(), pairs);
+        }
+        else{
+            receiveJsonResult = HttpRequestClientUtil.httpRequest(requestParamUtil);
+        }
         if (receiveJsonResult.getInteger("Code") == 200){
             JSONObject pageData = receiveJsonResult.getJSONObject("Data");
             datas = pageData.getJSONArray("data");
@@ -199,6 +217,18 @@ public class YbTestService {
             throw new TableNameException(receiveJsonResult.getString("Msg"));
         }
         return datas;
+    }
+
+
+    private NameValuePair[] getPairs(RequestParamUtil requestParamUtil){
+        Map<String, Object> params = requestParamUtil.getParaments();
+        List<NameValuePair> pairs = new ArrayList<NameValuePair>();
+        for (Map.Entry<String, Object> entry : params.entrySet()){
+            NameValuePair pair = new NameValuePair(entry.getKey(), (String) entry.getValue());
+            pairs.add(pair);
+        }
+
+        return (NameValuePair[]) pairs.toArray();
     }
 
 

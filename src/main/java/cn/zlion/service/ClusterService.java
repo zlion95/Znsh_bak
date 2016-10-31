@@ -48,7 +48,7 @@ public class ClusterService {
     }
 
 
-    public PageResult getResultSetByTableName(String appId, String dynamicTableName, int page, int rows) throws TableNameException{
+    private PageResult getResultSetByTableName(String appId, String dynamicTableName, int page, int rows) throws TableNameException{
 
         PageResult pageResult = null;
 
@@ -68,7 +68,7 @@ public class ClusterService {
 
         PageResult pageResult = null;
         if (clusterDataDao.checkTableExist(appId, tableName)){
-            pageResult = clusterDataDao.findByTimeAndPage(appId, page, rows, tableName, updateTime);
+            pageResult = clusterDataDao.findByTimeAndPage(appId, page, rows, tableName, updateTime, null);
 
         }else{
             throw new TableNameException("Table named " + tableName + " isn't exist!");
@@ -82,7 +82,7 @@ public class ClusterService {
 
         PageResult pageResult = null;
         if (clusterDataDao.checkTableExist(appId, tableName)){
-            pageResult = clusterDataDao.findResultByPk(appId, page, rows, tableName, pk);
+            pageResult = clusterDataDao.findByTimeAndPage(appId, page, rows, tableName, null, pk);
 
         }else{
             throw new TableNameException("Table named " + tableName + " isn't exist!");

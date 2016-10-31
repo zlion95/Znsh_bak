@@ -49,12 +49,13 @@ public class                                                                    
 
         Result jsonRender = new Result();
         String appId = request.getParameter("app_id");
-        String resultTableName = request.getParameter("table");
+        String tableName = request.getParameter("table");
         String lastBakTimeString = null;
         Date lastBaktime = new Date();
+        String pk = request.getParameter("pk");
         try{
             appId = URLDecoder.decode(appId, "UTF-8");
-            resultTableName = URLDecoder.decode(resultTableName, "UTF-8");
+            tableName = URLDecoder.decode(tableName, "UTF-8");
             if (request.getParameter("update-time") != null && !request.getParameter("update-time").equals("")){
                 lastBakTimeString = URLDecoder.decode(request.getParameter("update-time"), "UTF-8");
                 lastBaktime.setTime(Long.parseLong(lastBakTimeString));
@@ -75,10 +76,15 @@ public class                                                                    
         try{
             PageResult pageResult = null;
             if (lastBakTimeString == null){
-                pageResult = clusterService.getPageResultByTableName(appId, resultTableName, page, rows);
+                if (pk == null || pk.equals("")){
+                    pageResult = clusterService.getPageResultByTableName(appId, tableName, page, rows);
+                }
+                else{
+                    pageResult = clusterService.getPageResultByTableNameAndPk(appId, tableName, page, rows, pk);
+                }
             }
             else{
-                pageResult = clusterService.getPageResultByTableNameAndTime(appId, resultTableName, page, rows, lastBaktime);
+                pageResult = clusterService.getPageResultByTableNameAndTime(appId, tableName, page, rows, lastBaktime);
             }
             jsonRender.put("Data", pageResult);
             jsonRender.put("Code", 200);

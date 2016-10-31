@@ -57,6 +57,7 @@ public class HttpRequestClientUtil {
         GetMethod get = new GetMethod(requestParamUtil.getURI());
         get.setRequestHeader("Content-Type","application/x-www-form-urlencoded;charset=utf-8");
         get.releaseConnection();
+
         return get;
     }
 

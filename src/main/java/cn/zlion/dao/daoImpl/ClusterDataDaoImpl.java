@@ -64,15 +64,35 @@ public class ClusterDataDaoImpl implements ClusterDataDao{
     }
 
 
-    //只有TaskResult
+    //lastUpdateTime对TaskResult有效, foreignPk 则对作业结果和规则结果有效
     @Override
-    public PageResult findByTimeAndPage(String app_id, int curPage, int pageRows, String tableName, Date lastUpdateTime) {
+    public PageResult findByTimeAndPage(String app_id, int curPage, int pageRows, String tableName, Date lastUpdateTime, String foreignPk) {
 
         Pagination pagination = null;
-        String sql = "SELECT * FROM \"" + app_id + "\".\"" + tableName +
-                "\" WHERE arrival_time > " + new Timestamp(lastUpdateTime.getTime()) + " ORDER BY pk";
 
-        pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new TaskResultRowMapper());
+        String sql = "SELECT * FROM \"" + app_id + "\".\"" + tableName + "\" ";
+
+        switch (tableName){
+            case "T_RESULT_TASK":
+                sql = sql + "WHERE time_arrival > \'" + new Timestamp(lastUpdateTime.getTime()) + "\' ORDER BY pk";
+                pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new TaskResultRowMapper());
+                break;
+            case "T_RESULT_JOB":
+                sql = sql + " WHERE pk_t=\'" + foreignPk + "\' ORDER BY pk";
+                pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage, new JobResultRowMapper());
+                break;
+            case "T_RESULT_RULE":
+                //联表查询
+                StringBuilder sqlBuilder = new StringBuilder(sql);
+                sqlBuilder.append("WHERE pk_j IN (");
+                sqlBuilder.append("SELECT pk FROM \"" + app_id + "\".\"" + JobResult.TABLE_NAME + "\" ");
+                sqlBuilder.append("WHERE pk_t=\'" + foreignPk + "\')");
+                sqlBuilder.append(" ORDER BY pk");
+                pagination = new Pagination(sqlBuilder.toString(), postgresqlJdbcTemplate, pageRows, curPage, new RuleResultRowMapper());
+                break;
+            default:
+                pagination = new Pagination(sql, postgresqlJdbcTemplate, pageRows, curPage);
+        }
 
         return new PageResult(pagination.getTotalRows(), pagination.getTotalPages(), pagination.getResultList());
     }

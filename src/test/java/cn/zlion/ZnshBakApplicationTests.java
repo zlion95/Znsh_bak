@@ -14,6 +14,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -23,13 +26,14 @@ import java.util.Map;
 @SpringBootTest
 public class ZnshBakApplicationTests {
 
-	@Autowired
-	private YbTestService ybTestService;
+//	@Autowired
+//	private YbTestService ybTestService;
 //	@Autowired
 //	private DataResultDao dataResultDao;
 
 	@Autowired
 	private ClusterDataDao clusterDataDao;
+	private final static SimpleDateFormat sim = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 	@Test
 	public void contextLoads() {
@@ -39,9 +43,16 @@ public class ZnshBakApplicationTests {
 //			System.out.println(data.get("pk"));
 //		}
 
-		List<Sheet> sheets = ybTestService.sheets();
-		System.out.println(sheets);
+//		List<Sheet> sheets = ybTestService.sheets();
+//		System.out.println(sheets);
 
+//		clusterDataDao.findByTimeAndPage()
+		try{
+			Date date = sim.parse("2016-09-27 11:01:41.831000");
+			System.out.println(date.getTime());
+		}catch (ParseException e){
+			e.printStackTrace();
+		}
 	}
 
 }
